@@ -1,0 +1,10 @@
+{
+    "servers": {
+        "autotester": {
+            "command": "node",
+            "args": [
+                "/Users/lovro.rakar/Documents/GIT PERSONAL/LovroCode/copilot-autotester/out/mcp-server.js"
+            ]
+        }
+    }
+}

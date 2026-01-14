@@ -1,0 +1,84 @@
+{
+  "name": "copilot-autotester",
+  "displayName": "Copilot Auto Tester",
+  "description": "Interactive feedback panel for GitHub Copilot with image support. Enables human-in-the-loop workflows for AI agents via MCP.",
+  "version": "1.0.0",
+  "publisher": "LovroRakar",
+  "license": "MIT",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LovroRakar/copilot-autotester"
+  },
+  "engines": {
+    "vscode": "^1.108.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "feedback",
+    "testing",
+    "mcp",
+    "ai"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "autotester-sidebar",
+          "title": "Auto Tester",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "autotester-sidebar": [
+        {
+          "type": "webview",
+          "id": "autotester.panel",
+          "name": "Auto Tester"
+        }
+      ]
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "autotester.mcpProvider",
+        "label": "Auto Tester Feedback"
+      }
+    ],
+    "commands": [
+      {
+        "command": "autotester.submitFeedback",
+        "title": "Submit Feedback",
+        "category": "Auto Tester"
+      },
+      {
+        "command": "autotester.openPanel",
+        "title": "Open Panel",
+        "category": "Auto Tester"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.108.1",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.0"
+  }
+}

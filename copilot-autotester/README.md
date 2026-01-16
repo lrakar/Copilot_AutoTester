@@ -49,6 +49,22 @@ Agent: "Which color scheme do you prefer: A (blue) or B (green)?"
 
 ## Development
 
+### Debugging the Extension
+
+The easiest way to test and debug the extension is using VS Code's built-in debugger:
+
+1. Open this project in VS Code
+2. Press **F5** to start debugging
+3. A new VS Code window (Extension Development Host) will open with the extension loaded
+4. Test the extension in the new window
+5. Use breakpoints in your TypeScript files for debugging
+
+The launch configuration (`.vscode/launch.json`) is pre-configured with:
+- `Run Extension` - Launches the extension in a new VS Code window
+- Automatic compilation via `npm: watch` pre-launch task
+
+### Build Commands
+
 ```bash
 # Install dependencies
 npm install

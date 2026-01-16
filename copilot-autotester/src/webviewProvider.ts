@@ -230,6 +230,17 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
             color: var(--vscode-input-placeholderForeground);
         }
         
+        textarea:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: var(--vscode-input-background);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
         .image-preview {
             display: flex;
             gap: 6px;
@@ -311,8 +322,8 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
     
     <div class="input-area">
         <div class="input-wrapper" id="inputWrapper">
-            <textarea id="input" placeholder="Your feedback..." rows="1"></textarea>
-            <button class="send-btn" id="sendBtn" title="Send">
+            <textarea id="input" placeholder="Waiting for request from agent..." rows="1" disabled></textarea>
+            <button class="send-btn" id="sendBtn" title="Send" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z"/>
                     <path d="M6 12h16"/>
@@ -450,6 +461,19 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
             }
         });
         
+        function enableInput() {
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.placeholder = 'Your feedback...';
+            input.focus();
+        }
+        
+        function disableInput() {
+            input.disabled = true;
+            sendBtn.disabled = true;
+            input.placeholder = 'Waiting for request from agent...';
+        }
+        
         window.addEventListener('message', (event) => {
             const msg = event.data;
             if (msg.command === 'showPrompt') {
@@ -457,13 +481,13 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                 if (msg.message && msg.message.trim()) {
                     addMessage(msg.message, 'agent');
                 }
-                input.focus();
+                enableInput();
             } else if (msg.command === 'focus') {
                 input.focus();
+            } else if (msg.command === 'submitted') {
+                disableInput();
             }
         });
-        
-        input.focus();
     </script>
 </body>
 </html>`;

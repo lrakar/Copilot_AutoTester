@@ -9,11 +9,23 @@ let viewProvider: AutoTesterViewProvider;
 const FEEDBACK_DIR = path.join(os.homedir(), '.autotester');
 const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'feedback.json');
 const REQUEST_FILE = path.join(FEEDBACK_DIR, 'request.json');
+const CONFIG_FILE = path.join(FEEDBACK_DIR, 'config.json');
 
 function ensureDir(): void {
     if (!fs.existsSync(FEEDBACK_DIR)) {
         fs.mkdirSync(FEEDBACK_DIR, { recursive: true });
     }
+}
+
+function writeConfig(): void {
+    ensureDir();
+    const config = vscode.workspace.getConfiguration('autotester');
+    const settings = {
+        toolName: config.get<string>('toolName', 'run_auto_tester'),
+        toolDescription: config.get<string>('toolDescription', 'Run after implementing features/fixes. Opens feedback panel with your description.'),
+        footer: config.get<string>('footer', '\n\n---\n⚠️ IMPORTANT: Always reply back via the autotester MCP tool after implementing changes. Continue the feedback loop until you receive a signal that all work is done.')
+    };
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(settings));
 }
 
 function writeFeedback(feedback: string, images?: string[]): void {
@@ -67,6 +79,17 @@ class AutoTesterMcpProvider implements vscode.McpServerDefinitionProvider<vscode
 export function activate(context: vscode.ExtensionContext): void {
     const feedbackStore = new FeedbackStore();
     viewProvider = new AutoTesterViewProvider(context.extensionUri, feedbackStore, writeFeedback);
+
+    // Write initial config for MCP server
+    writeConfig();
+
+    // Watch for settings changes and update config file
+    const configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('autotester')) {
+            writeConfig();
+        }
+    });
+    context.subscriptions.push(configChangeDisposable);
 
     // Register MCP Server Definition Provider
     // This makes the Auto Tester tools available to GitHub Copilot automatically

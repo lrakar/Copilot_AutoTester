@@ -11,8 +11,28 @@ const FEEDBACK_DIR = path.join(os.homedir(), '.autotester');
 const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'feedback.json');
 const REQUEST_FILE = path.join(FEEDBACK_DIR, 'request.json');
 const IMAGES_DIR = path.join(FEEDBACK_DIR, 'images');
+const CONFIG_FILE = path.join(FEEDBACK_DIR, 'config.json');
 
-const FOOTER = `\n\n---\n⚠️ IMPORTANT: Always reply back via the autotester MCP tool after implementing changes. Continue the feedback loop until you receive a signal that all work is done.`;
+interface Config {
+    toolName: string;
+    toolDescription: string;
+    footer: string;
+}
+
+const DEFAULT_CONFIG: Config = {
+    toolName: 'run_auto_tester',
+    toolDescription: 'Run after implementing features/fixes. Opens feedback panel with your description.',
+    footer: '\n\n---\n⚠️ IMPORTANT: Always reply back via the autotester MCP tool after implementing changes. Continue the feedback loop until you receive a signal that all work is done.'
+};
+
+function loadConfig(): Config {
+    try {
+        if (fs.existsSync(CONFIG_FILE)) {
+            return { ...DEFAULT_CONFIG, ...JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8')) };
+        }
+    } catch { /* use defaults */ }
+    return DEFAULT_CONFIG;
+}
 
 interface ContentBlock { type: 'text' | 'image'; text?: string; data?: string; mimeType?: string; }
 interface MCPRequest { jsonrpc: string; id?: number | string; method: string; params?: Record<string, unknown>; }
@@ -58,7 +78,8 @@ async function waitForFeedback(timeout = 300000): Promise<ContentBlock[]> {
                         });
                     }
                     
-                    return [{ type: 'text', text: text + FOOTER }, ...blocks];
+                    const config = loadConfig();
+                    return [{ type: 'text', text: text + config.footer }, ...blocks];
                 }
             } catch { /* retry */ }
         }
@@ -75,13 +96,16 @@ async function executeTool(prompt: string): Promise<ContentBlock[]> {
     return waitForFeedback();
 }
 
-const TOOLS = [
-    {
-        name: 'run_auto_tester',
-        description: 'Run after implementing features/fixes. Opens feedback panel with your description.',
-        inputSchema: { type: 'object', properties: { description: { type: 'string', description: 'What was changed' } } }
-    }
-];
+function getTools() {
+    const config = loadConfig();
+    return [
+        {
+            name: config.toolName,
+            description: config.toolDescription,
+            inputSchema: { type: 'object', properties: { description: { type: 'string', description: 'What was changed' } } }
+        }
+    ];
+}
 
 class MCPServer {
     private buf = '';
@@ -114,12 +138,13 @@ class MCPServer {
             return { jsonrpc: '2.0', id, result: { protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'auto-tester', version: '1.0.0' } } };
         }
         if (method === 'initialized') return null;
-        if (method === 'tools/list') return { jsonrpc: '2.0', id, result: { tools: TOOLS } };
+        if (method === 'tools/list') return { jsonrpc: '2.0', id, result: { tools: getTools() } };
         
         if (method === 'tools/call') {
             const { name, arguments: args = {} } = params as { name: string; arguments?: Record<string, unknown> };
+            const config = loadConfig();
             
-            if (name === 'run_auto_tester') {
+            if (name === config.toolName) {
                 const desc = (args.description as string)?.trim() || 'Changes made. Please review.';
                 const content = await executeTool(desc);
                 return { jsonrpc: '2.0', id, result: { content } };

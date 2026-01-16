@@ -65,7 +65,27 @@
         "title": "Open Panel",
         "category": "Auto Tester"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Auto Tester",
+      "properties": {
+        "autotester.toolName": {
+          "type": "string",
+          "default": "run_auto_tester",
+          "description": "The name of the MCP tool exposed to the agent."
+        },
+        "autotester.toolDescription": {
+          "type": "string",
+          "default": "Run after implementing features/fixes. Opens feedback panel with your description.",
+          "description": "The description of the MCP tool shown to the agent."
+        },
+        "autotester.footer": {
+          "type": "string",
+          "default": "\n\n---\n⚠️ IMPORTANT: Always reply back via the autotester MCP tool after implementing changes. Continue the feedback loop until you receive a signal that all work is done.",
+          "description": "Footer message appended to all feedback responses."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

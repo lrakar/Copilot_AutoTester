@@ -1,10 +1,12 @@
 {
-    "servers": {
-        "autotester": {
-            "command": "node",
-            "args": [
-                "/Users/lovro.rakar/Documents/GIT PERSONAL/LovroCode/copilot-autotester/out/mcp-server.js"
-            ]
-        }
-    }
+	"servers": {
+		"auto-fixer": {
+			"type": "stdio",
+			"command": "python",
+			"args": [
+				"C:\\Users\\jezersek\\Downloads\\mcp-test\\mcp_server.py"
+			]
+		}
+	},
+	"inputs": []
 }

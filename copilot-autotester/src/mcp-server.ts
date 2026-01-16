@@ -80,11 +80,6 @@ const TOOLS = [
         name: 'run_auto_tester',
         description: 'Run after implementing features/fixes. Opens feedback panel with your description.',
         inputSchema: { type: 'object', properties: { description: { type: 'string', description: 'What was changed' } } }
-    },
-    {
-        name: 'request_user_feedback', 
-        description: 'Request user feedback with a custom prompt.',
-        inputSchema: { type: 'object', properties: { prompt: { type: 'string', description: 'Message to show user', default: 'Please provide feedback' } } }
     }
 ];
 
@@ -127,11 +122,6 @@ class MCPServer {
             if (name === 'run_auto_tester') {
                 const desc = (args.description as string)?.trim() || 'Changes made. Please review.';
                 const content = await executeTool(desc);
-                return { jsonrpc: '2.0', id, result: { content } };
-            }
-            if (name === 'request_user_feedback') {
-                const prompt = (args.prompt as string) || 'Please provide feedback';
-                const content = await executeTool(prompt);
                 return { jsonrpc: '2.0', id, result: { content } };
             }
             return { jsonrpc: '2.0', id, error: { code: -32602, message: `Unknown tool: ${name}` } };

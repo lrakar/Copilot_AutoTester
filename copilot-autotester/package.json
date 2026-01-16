@@ -83,6 +83,16 @@
           "type": "string",
           "default": "\n\n---\n⚠️ IMPORTANT: Always reply back via the autotester MCP tool after implementing changes. Continue the feedback loop until you receive a signal that all work is done.",
           "description": "Footer message appended to all feedback responses."
+        },
+        "autotester.enterToSubmit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Submit feedback when pressing Enter (without modifiers). Shift+Enter always creates a new line."
+        },
+        "autotester.ctrlEnterToSubmit": {
+          "type": "boolean",
+          "default": false,
+          "description": "Submit feedback when pressing Ctrl+Enter (or Cmd+Enter on Mac)."
         }
       }
     }

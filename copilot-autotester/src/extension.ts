@@ -6,7 +6,7 @@ import { AutoTesterViewProvider } from './webviewProvider';
 import { FeedbackStore } from './feedbackStore';
 
 let viewProvider: AutoTesterViewProvider;
-const FEEDBACK_DIR = path.join(os.homedir(), '.autotester');
+const FEEDBACK_DIR = path.join(os.tmpdir(), '.autotester');
 const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'feedback.json');
 const REQUEST_FILE = path.join(FEEDBACK_DIR, 'request.json');
 const CONFIG_FILE = path.join(FEEDBACK_DIR, 'config.json');
@@ -83,10 +83,11 @@ export function activate(context: vscode.ExtensionContext): void {
     // Write initial config for MCP server
     writeConfig();
 
-    // Watch for settings changes and update config file
+    // Watch for settings changes and update config file + webview
     const configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('autotester')) {
             writeConfig();
+            viewProvider.sendConfig();
         }
     });
     context.subscriptions.push(configChangeDisposable);

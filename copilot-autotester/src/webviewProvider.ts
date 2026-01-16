@@ -34,7 +34,19 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                 case 'clear':
                     this.feedbackStore.clear();
                     break;
+                case 'ready':
+                    this.sendConfig();
+                    break;
             }
+        });
+    }
+
+    public sendConfig(): void {
+        const config = vscode.workspace.getConfiguration('autotester');
+        this.postMessage({
+            command: 'config',
+            enterToSubmit: config.get<boolean>('enterToSubmit', true),
+            ctrlEnterToSubmit: config.get<boolean>('ctrlEnterToSubmit', false)
         });
     }
 
@@ -175,7 +187,6 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
         
         .input-area {
             padding: 12px;
-            border-top: 1px solid var(--vscode-widget-border);
             background: var(--vscode-sideBar-background);
         }
         
@@ -193,15 +204,15 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
         textarea {
             width: 100%;
             min-height: 44px;
-            max-height: 120px;
+            max-height: 360px;
             padding: 10px 36px 10px 12px;
             font-family: var(--vscode-font-family);
             font-size: 13px;
             line-height: 1.4;
             color: var(--vscode-input-foreground);
             background: var(--vscode-input-background);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
+            border: 1px solid transparent;
+            border-radius: 4px;
             resize: none;
             outline: none;
             overflow-y: auto;
@@ -316,7 +327,7 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                 <path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/>
                 <path d="m17 22 5-3-5-3v6Z"/>
             </svg>
-            <div>Waiting for agent...</div>
+            <div>No requests from agent so far.</div>
         </div>
     </div>
     
@@ -416,8 +427,25 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
         
         sendBtn.addEventListener('click', send);
         
+        // Settings for submit behavior (injected from VS Code)
+        let enterToSubmit = true;
+        let ctrlEnterToSubmit = false;
+        
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Shift+Enter always creates a new line
+            if (e.key === 'Enter' && e.shiftKey) {
+                return; // Allow default behavior (new line)
+            }
+            
+            // Ctrl+Enter (or Cmd+Enter on Mac) to submit
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && ctrlEnterToSubmit) {
+                e.preventDefault();
+                send();
+                return;
+            }
+            
+            // Enter to submit (without any modifiers)
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && enterToSubmit) {
                 e.preventDefault();
                 send();
             }
@@ -425,7 +453,7 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
         
         input.addEventListener('input', () => {
             input.style.height = '44px';
-            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            input.style.height = Math.min(input.scrollHeight, 360) + 'px';
         });
         
         // Paste image support
@@ -486,8 +514,14 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                 input.focus();
             } else if (msg.command === 'submitted') {
                 disableInput();
+            } else if (msg.command === 'config') {
+                enterToSubmit = msg.enterToSubmit;
+                ctrlEnterToSubmit = msg.ctrlEnterToSubmit;
             }
         });
+        
+        // Request initial config from extension
+        vscode.postMessage({ command: 'ready' });
     </script>
 </body>
 </html>`;

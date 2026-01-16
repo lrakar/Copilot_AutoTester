@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const FEEDBACK_DIR = path.join(os.homedir(), '.autotester');
+const FEEDBACK_DIR = path.join(os.tmpdir(), '.autotester');
 const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'feedback.json');
 const REQUEST_FILE = path.join(FEEDBACK_DIR, 'request.json');
 const IMAGES_DIR = path.join(FEEDBACK_DIR, 'images');

@@ -3,10 +3,29 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FeedbackStore } from './feedbackStore';
 
+interface ChatMessage {
+    text: string;
+    type: 'user' | 'agent';
+    images?: string[];
+}
+
+interface WebviewState {
+    messages: ChatMessage[];
+    inputEnabled: boolean;
+    pendingPrompt?: string;
+}
+
 export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'autotester.panel';
     private view?: vscode.WebviewView;
     private feedbackResolve?: (value: string) => void;
+    
+    // Persistent state stored in extension
+    private state: WebviewState = {
+        messages: [],
+        inputEnabled: false,
+        pendingPrompt: undefined
+    };
 
     constructor(
         private readonly extensionUri: vscode.Uri,
@@ -35,12 +54,39 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'clear':
                     this.feedbackStore.clear();
+                    this.state.messages = [];
                     break;
                 case 'ready':
                     this.sendConfig();
+                    this.restoreState();
                     break;
             }
         });
+    }
+
+    private restoreState(): void {
+        // Restore messages
+        if (this.state.messages.length > 0) {
+            this.postMessage({
+                command: 'restoreMessages',
+                messages: this.state.messages
+            });
+        }
+        
+        // Restore input state - if there's a pending prompt or input was enabled
+        if (this.state.inputEnabled || this.state.pendingPrompt) {
+            this.postMessage({
+                command: 'enableInput'
+            });
+            // If there was a pending prompt, show it again
+            if (this.state.pendingPrompt) {
+                this.postMessage({
+                    command: 'showPrompt',
+                    message: this.state.pendingPrompt,
+                    skipAddMessage: true // Don't add duplicate message
+                });
+            }
+        }
     }
 
     public sendConfig(): void {
@@ -54,6 +100,15 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
 
     private handleFeedbackSubmit(text: string, images?: string[]): void {
         if (!text.trim() && (!images || images.length === 0)) return;
+
+        // Track user message in state
+        this.state.messages.push({
+            text: text || '(image)',
+            type: 'user',
+            images: images
+        });
+        this.state.inputEnabled = false;
+        this.state.pendingPrompt = undefined;
 
         this.feedbackStore.add(text);
         
@@ -82,6 +137,16 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
     }
 
     public showPrompt(message: string): void {
+        // Track agent message and input state
+        if (message && message.trim()) {
+            this.state.messages.push({
+                text: message,
+                type: 'agent'
+            });
+        }
+        this.state.inputEnabled = true;
+        this.state.pendingPrompt = message;
+        
         this.postMessage({ command: 'showPrompt', message });
         vscode.commands.executeCommand('autotester.panel.focus');
     }

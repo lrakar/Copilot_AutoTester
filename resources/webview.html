@@ -410,8 +410,8 @@
         window.addEventListener('message', (event) => {
             const msg = event.data;
             if (msg.command === 'showPrompt') {
-                // Only add message if it's not empty
-                if (msg.message && msg.message.trim()) {
+                // Only add message if it's not empty and not a restore (skipAddMessage)
+                if (msg.message && msg.message.trim() && !msg.skipAddMessage) {
                     addMessage(msg.message, 'agent');
                 }
                 enableInput();
@@ -422,6 +422,12 @@
             } else if (msg.command === 'config') {
                 enterToSubmit = msg.enterToSubmit;
                 ctrlEnterToSubmit = msg.ctrlEnterToSubmit;
+            } else if (msg.command === 'restoreMessages') {
+                // Restore messages from extension state
+                messages = msg.messages || [];
+                render();
+            } else if (msg.command === 'enableInput') {
+                enableInput();
             }
         });
         

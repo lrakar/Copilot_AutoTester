@@ -7,7 +7,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const FEEDBACK_DIR = path.join(os.tmpdir(), '.autotester');
+// Parse command-line arguments for feedback directory
+function getFeedbackDir(): string {
+    const args = process.argv.slice(2);
+    const feedbackDirIndex = args.indexOf('--feedback-dir');
+    if (feedbackDirIndex !== -1 && args[feedbackDirIndex + 1]) {
+        return args[feedbackDirIndex + 1];
+    }
+    // Fallback to default (for backwards compatibility)
+    return path.join(os.tmpdir(), '.autotester');
+}
+
+const FEEDBACK_DIR = getFeedbackDir();
 const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'feedback.json');
 const REQUEST_FILE = path.join(FEEDBACK_DIR, 'request.json');
 const IMAGES_DIR = path.join(FEEDBACK_DIR, 'images');

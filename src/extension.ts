@@ -2,11 +2,15 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as crypto from 'crypto';
 import { AutoTesterViewProvider } from './webviewProvider';
 import { FeedbackStore } from './feedbackStore';
 
 let viewProvider: AutoTesterViewProvider;
-const FEEDBACK_DIR = path.join(os.tmpdir(), '.autotester');
+
+// Generate unique instance ID for this VS Code window
+const INSTANCE_ID = crypto.randomBytes(8).toString('hex');
+const FEEDBACK_DIR = path.join(os.tmpdir(), '.autotester', INSTANCE_ID);
 const FEEDBACK_FILE = path.join(FEEDBACK_DIR, 'feedback.json');
 const REQUEST_FILE = path.join(FEEDBACK_DIR, 'request.json');
 const CONFIG_FILE = path.join(FEEDBACK_DIR, 'config.json');
@@ -56,7 +60,10 @@ function checkForRequest(): { prompt: string } | null {
  * so Copilot can use it without manual mcp.json configuration
  */
 class AutoTesterMcpProvider implements vscode.McpServerDefinitionProvider<vscode.McpStdioServerDefinition> {
-    constructor(private readonly extensionPath: string) {}
+    constructor(
+        private readonly extensionPath: string,
+        private readonly feedbackDir: string
+    ) {}
 
     provideMcpServerDefinitions(
         _token: vscode.CancellationToken
@@ -64,11 +71,12 @@ class AutoTesterMcpProvider implements vscode.McpServerDefinitionProvider<vscode
         const mcpServerPath = path.join(this.extensionPath, 'out', 'mcp-server.js');
         
         // Return the MCP server definition - VS Code will spawn this process
+        // Pass the unique feedback directory as a command-line argument
         return [
             new vscode.McpStdioServerDefinition(
                 'Auto Tester',      // label shown in UI
                 'node',             // command
-                [mcpServerPath],    // args
+                [mcpServerPath, '--feedback-dir', this.feedbackDir],    // args with unique folder
                 {},                 // env
                 '1.0.0'             // version
             )
@@ -94,7 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Register MCP Server Definition Provider
     // This makes the Auto Tester tools available to GitHub Copilot automatically
-    const mcpProvider = new AutoTesterMcpProvider(context.extensionPath);
+    const mcpProvider = new AutoTesterMcpProvider(context.extensionPath, FEEDBACK_DIR);
     const mcpDisposable = vscode.lm.registerMcpServerDefinitionProvider(
         'autotester.mcpProvider',
         mcpProvider
@@ -127,4 +135,13 @@ export function activate(context: vscode.ExtensionContext): void {
     console.log('Auto Tester extension activated with MCP server provider');
 }
 
-export function deactivate(): void {}
+export function deactivate(): void {
+    // Cleanup the instance-specific folder
+    try {
+        if (fs.existsSync(FEEDBACK_DIR)) {
+            fs.rmSync(FEEDBACK_DIR, { recursive: true, force: true });
+        }
+    } catch {
+        // Ignore cleanup errors
+    }
+}

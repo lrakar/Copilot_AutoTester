@@ -359,6 +359,8 @@
         input.addEventListener('input', () => {
             input.style.height = '44px';
             input.style.height = Math.min(input.scrollHeight, 360) + 'px';
+            // Save input text to extension for persistence
+            vscode.postMessage({ command: 'saveInput', text: input.value });
         });
         
         // Paste image support
@@ -428,6 +430,11 @@
                 render();
             } else if (msg.command === 'enableInput') {
                 enableInput();
+            } else if (msg.command === 'restoreInput') {
+                // Restore textarea input text
+                input.value = msg.text || '';
+                input.style.height = '44px';
+                input.style.height = Math.min(input.scrollHeight, 360) + 'px';
             }
         });
         

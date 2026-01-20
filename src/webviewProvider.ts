@@ -13,6 +13,7 @@ interface WebviewState {
     messages: ChatMessage[];
     inputEnabled: boolean;
     pendingPrompt?: string;
+    pendingInput?: string;
 }
 
 export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
@@ -24,7 +25,8 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
     private state: WebviewState = {
         messages: [],
         inputEnabled: false,
-        pendingPrompt: undefined
+        pendingPrompt: undefined,
+        pendingInput: undefined
     };
 
     constructor(
@@ -60,6 +62,9 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                     this.sendConfig();
                     this.restoreState();
                     break;
+                case 'saveInput':
+                    this.state.pendingInput = message.text;
+                    break;
             }
         });
     }
@@ -87,6 +92,14 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
                 });
             }
         }
+        
+        // Restore textarea input text
+        if (this.state.pendingInput) {
+            this.postMessage({
+                command: 'restoreInput',
+                text: this.state.pendingInput
+            });
+        }
     }
 
     public sendConfig(): void {
@@ -109,6 +122,7 @@ export class AutoTesterViewProvider implements vscode.WebviewViewProvider {
         });
         this.state.inputEnabled = false;
         this.state.pendingPrompt = undefined;
+        this.state.pendingInput = undefined;
 
         this.feedbackStore.add(text);
         

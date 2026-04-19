@@ -59,11 +59,10 @@ const parseDataUri = (uri: string): { data: string; mimeType: string } => {
     return { data: uri, mimeType: 'image/png' };
 };
 
-async function waitForFeedback(timeout = 300000): Promise<ContentBlock[]> {
+async function waitForFeedback(): Promise<ContentBlock[]> {
     ensureDir();
-    const start = Date.now();
     
-    while (Date.now() - start < timeout) {
+    while (true) {
         if (fs.existsSync(FEEDBACK_FILE)) {
             try {
                 const { feedback = '', images = [] } = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
@@ -96,7 +95,6 @@ async function waitForFeedback(timeout = 300000): Promise<ContentBlock[]> {
         }
         await new Promise(r => setTimeout(r, 500));
     }
-    return [{ type: 'text', text: '[Timeout: No feedback received]' }];
 }
 
 async function executeTool(prompt: string): Promise<ContentBlock[]> {
